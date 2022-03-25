@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "fastapi-django"
+version = "0.1.0"
+description = ""
+authors = ["David Danier <danier@team23.de>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.75.0"
+Django = "^4.0.3"
+uvicorn = "^0.17.6"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
