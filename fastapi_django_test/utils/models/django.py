@@ -54,7 +54,7 @@ def django_to_pydantic_model(
             pydantic_type = Optional[pydantic_type]
             pydantic_default = None
 
-        # TODO: Handle mac_length etc. ;-)
+        # TODO: Handle max_length etc. ;-)
         pydantic_fields[field.name] = (
             pydantic_type,
             pydantic.Field(
