@@ -6,9 +6,9 @@ authors = ["David Danier <danier@team23.de>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-fastapi = "^0.75.0"
-Django = "^4.0.3"
-uvicorn = "^0.17.6"
+fastapi = "^0.79.0"
+Django = "^4.1"
+uvicorn = "^0.18.2"
 
 [tool.poetry.dev-dependencies]
 

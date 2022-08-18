@@ -16,6 +16,10 @@ task:update() {
   run:poetry install
 }
 
+task:poetry() {
+  run:poetry "$@"
+}
+
 task:run() {
   run:poetry run uvicorn fastapi_django_test.main:app --host 0.0.0.0 --port 8000 --reload
 }
