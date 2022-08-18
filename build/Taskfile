@@ -14,6 +14,7 @@ task:install() {
 
 task:update() {
   run:poetry install
+  run:poetry run python manage.py migrate
 }
 
 task:poetry() {
