@@ -28,3 +28,7 @@ task:run() {
 task:test() {
   run:poetry run pytest
 }
+
+task:manage.py() {
+  run:poetry run python manage.py "$@"
+}

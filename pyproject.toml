@@ -12,10 +12,10 @@ uvicorn = "^0.18.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"
-django-pytest = "^0.2.0"
 anyio = "^3.6.1"
 httpx = "^0.23.0"
 dirty-equals = "^0.4"
+pytest-django = "^4.5.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
