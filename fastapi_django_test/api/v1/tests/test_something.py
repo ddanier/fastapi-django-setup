@@ -1,6 +1,6 @@
 import pytest
 from httpx import AsyncClient
-from dirty_equals import IsPartialDict, Contains, IsAnyStr
+from dirty_equals import IsPartialDict, Contains, IsPositiveInt
 
 from ....main import app
 from ....something.models import Something
@@ -8,9 +8,8 @@ from ....something.models import Something
 
 @pytest.fixture
 @pytest.mark.django_db
-@pytest.mark.usefixtures('django_db_setup')
+@pytest.mark.usefixtures('django_db_setup', 'transactional_db')
 def create_somethings():
-    print("Creating somethings")
     Something.objects.create(
         name='Something 1',
     )
@@ -18,11 +17,12 @@ def create_somethings():
 
 @pytest.mark.anyio
 @pytest.mark.django_db
-@pytest.mark.usefixtures('create_somethings')
-async def test_hello_world(django_db_blocker):
+@pytest.mark.usefixtures('create_somethings', 'transactional_db')
+async def test_hello_world():
     async with AsyncClient(app=app, base_url="http://test") as ac:
         response = await ac.get("/api/v1/somethings/")
+
     assert response.status_code == 200
     assert response.json() == Contains(
-        IsPartialDict(id=IsAnyStr),
+        IsPartialDict(id=IsPositiveInt),
     )
