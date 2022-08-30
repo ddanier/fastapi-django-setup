@@ -28,3 +28,6 @@ Have fun with it. 👍🙃
 * Some things in the repo are just my personal best practices (like using `dirty-equals`
   in the tests). Make your own choices. 😉
 
+## Current state
+
+Currently everything seems to be working somehow. 🥳
