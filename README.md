@@ -13,7 +13,7 @@ Have fun with it. 👍🙃
 
 ## Some more serious details and notes
 
-* The basic goal is to use DJango like normal and have FastAPI provide the API URLs
+* The basic goal is to use Django like normal and have FastAPI provide the API URLs
   using the Django ORM. Also I would like to use the Django admin again.
 * Using Django as a mount in FastAPI will loose the static files handling Django normally
   enabled on your local dev server. See `main.py` on how to solve this.
