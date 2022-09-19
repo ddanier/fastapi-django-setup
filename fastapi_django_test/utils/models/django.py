@@ -1,7 +1,9 @@
 import datetime
 import decimal
-from typing import (Any, Callable, Dict, Generic, List, Optional, Tuple, Type,
-                    TypeVar, cast)
+from typing import (
+    Any, Callable, Dict, Generic, List, Optional, Tuple, Type,
+    TypeVar, Union, cast,
+)
 from uuid import UUID
 
 import pydantic
@@ -48,7 +50,7 @@ FIELD_TYPE_MAP: Dict[
     # TODO: What fits best here? models.FilePathField: (pydantic.FilePath, None),
     # TODO: What fits best here? models.ImageField: (pydantic.FilePath, None),
     models.GenericIPAddressField: (pydantic.IPvAnyAddress, None),
-    models.JSONField: (Dict[str, Any] | List, None),
+    models.JSONField: (Union[Dict[str, Any], List], None),
     models.SlugField: (str, None),
     models.URLField: (pydantic.AnyUrl, None),
     models.UUIDField: (UUID, None),
