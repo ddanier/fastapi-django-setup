@@ -75,12 +75,16 @@ def django_to_pydantic_model(
             pydantic_type, pydantic_params_callback = pydantic_config
 
         if pydantic_type is None:
+            skip_field = False
             for django_field_type, pydantic_config in FIELD_TYPE_MAP.items():
                 if isinstance(field, django_field_type):
                     if pydantic_config is None:
-                        continue  # skip field
+                        skip_field = True
+                        continue  # skip loop
                     pydantic_type, pydantic_params_callback = pydantic_config
                     break
+            if skip_field:
+                continue  # skip field
 
         if pydantic_type is None:
             raise ValueError(f"Cannot determine type of field {field.name} for "
