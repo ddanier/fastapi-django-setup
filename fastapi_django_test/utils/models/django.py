@@ -21,7 +21,10 @@ class DjangoModelBase(pydantic.BaseModel, Generic[DjangoModelT]):
         return cls.parse_obj(model_to_dict(obj))
 
 
-FIELD_TYPE_MAP: Dict[Type[models.Field], Tuple[Type, Callable[[models.Field], Dict[str, Any]] | None] | None] = {
+FIELD_TYPE_MAP: Dict[
+    Type[models.Field],
+    Optional[Tuple[Type, Optional[Callable[[models.Field], Dict[str, Any]]]]],
+] = {
     models.AutoField: (int, None),
     models.SmallAutoField: (int, None),
     models.BigAutoField: (int, None),
