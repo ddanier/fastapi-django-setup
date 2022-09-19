@@ -75,9 +75,11 @@ def django_to_pydantic_model(
             pydantic_type, pydantic_params_callback = pydantic_config
 
         if pydantic_type is None:
-            for django_field_type, pydantic_type_ in FIELD_TYPE_MAP.items():
+            for django_field_type, pydantic_config in FIELD_TYPE_MAP.items():
                 if isinstance(field, django_field_type):
-                    pydantic_type = pydantic_type_
+                    if pydantic_config is None:
+                        continue  # skip field
+                    pydantic_type, pydantic_params_callback = pydantic_config
                     break
 
         if pydantic_type is None:
