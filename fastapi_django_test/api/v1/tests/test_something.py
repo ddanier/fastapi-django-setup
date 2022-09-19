@@ -1,6 +1,6 @@
 import pytest
+from dirty_equals import Contains, IsPartialDict, IsPositiveInt
 from httpx import AsyncClient
-from dirty_equals import IsPartialDict, Contains, IsPositiveInt
 
 from ....main import app
 from ....something.models import Something

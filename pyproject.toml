@@ -10,12 +10,13 @@ fastapi = "^0.79.0"
 Django = "^4.1"
 uvicorn = "^0.18.2"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^7.1.2"
 anyio = "^3.6.1"
 httpx = "^0.23.0"
 dirty-equals = "^0.4"
 pytest-django = "^4.5.2"
+isort = "^5.10.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

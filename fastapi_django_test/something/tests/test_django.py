@@ -1,4 +1,5 @@
 from django.test import TestCase
+
 from fastapi_django_test.something.models import Something
 
 

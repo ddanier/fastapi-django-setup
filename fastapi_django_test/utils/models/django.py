@@ -1,12 +1,12 @@
 import datetime
 import decimal
-from typing import Any, Callable, Generic, Type, TypeVar, cast
+from typing import (Any, Callable, Dict, Generic, List, Optional, Tuple, Type,
+                    TypeVar, cast)
 from uuid import UUID
 
 import pydantic
 from django.db import models
 from django.forms.models import model_to_dict
-
 
 SelfModelT = TypeVar("SelfModelT", bound=pydantic.BaseModel)
 DjangoModelT = TypeVar("DjangoModelT", bound=models.Model)
@@ -21,7 +21,7 @@ class DjangoModelBase(pydantic.BaseModel, Generic[DjangoModelT]):
         return cls.parse_obj(model_to_dict(obj))
 
 
-FIELD_TYPE_MAP: dict[type[models.Field], tuple[type, Callable[[models.Field], dict[str, Any]] | None] | None] = {
+FIELD_TYPE_MAP: Dict[Type[models.Field], Tuple[Type, Callable[[models.Field], Dict[str, Any]] | None] | None] = {
     models.AutoField: (int, None),
     models.SmallAutoField: (int, None),
     models.BigAutoField: (int, None),
@@ -45,7 +45,7 @@ FIELD_TYPE_MAP: dict[type[models.Field], tuple[type, Callable[[models.Field], di
     # TODO: What fits best here? models.FilePathField: (pydantic.FilePath, None),
     # TODO: What fits best here? models.ImageField: (pydantic.FilePath, None),
     models.GenericIPAddressField: (pydantic.IPvAnyAddress, None),
-    models.JSONField: (dict[str, Any] | list, None),
+    models.JSONField: (Dict[str, Any] | List, None),
     models.SlugField: (str, None),
     models.URLField: (pydantic.AnyUrl, None),
     models.UUIDField: (UUID, None),
@@ -81,7 +81,7 @@ def django_to_pydantic_model(
 
         pydantic_default = ...
         if field.null:
-            pydantic_type = pydantic_type | None
+            pydantic_type = Optional[pydantic_type]
             if field.blank:
                 pydantic_default = None
 

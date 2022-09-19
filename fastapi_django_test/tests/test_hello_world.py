@@ -1,6 +1,6 @@
 import pytest
-from httpx import AsyncClient
 from dirty_equals import IsPartialDict
+from httpx import AsyncClient
 
 from ..main import app
 
