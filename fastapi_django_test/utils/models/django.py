@@ -25,7 +25,7 @@ def model_to_dict(
 
     Suitable for passing as a Form's ``initial`` keyword argument.
 
-    ``fields`` is an optional list of field names. If provided, return only the
+    ``include`` is an optional list of field names. If provided, return only the
     named.
 
     ``exclude`` is an optional list of field names. If provided, exclude the
