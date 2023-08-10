@@ -1,29 +1,97 @@
 import datetime
 import decimal
 from collections.abc import Callable
-from typing import (
-    Any,
-    Generic,
-    TypeVar,
-    cast,
-)
+from typing import Any, Generic, Self, TypeVar, Union, cast, overload
 from uuid import UUID
 
-import pydantic
 from django.db import models
-from django.forms.models import model_to_dict
+from django.db.models import FileField
+from django.db.models.fields import reverse_related
 
-SelfModelT = TypeVar("SelfModelT", bound=pydantic.BaseModel)
+import pydantic
+
 DjangoModelT = TypeVar("DjangoModelT", bound=models.Model)
+
+
+def model_to_dict(
+    instance: Any,
+    include: list[str] = None,
+    exclude: list[str] = None,
+) -> dict[str, Any]:
+    """
+    Return a dict containing the data in ``instance``.
+
+    Suitable for passing as a Form's ``initial`` keyword argument.
+
+    ``fields`` is an optional list of field names. If provided, return only the
+    named.
+
+    ``exclude`` is an optional list of field names. If provided, exclude the
+    named from the returned dict, even if they are listed in the ``fields``
+    argument.
+    """
+
+    opts = instance._meta
+    data = {}
+    for field in opts.get_fields():
+        if include is not None and field.name not in include:
+            continue
+        if exclude and field.name in exclude:
+            continue
+        if isinstance(field, FileField):
+            # Check if a file has been set
+            # Comparison to None does not work because the field still contains a FieldFile Object
+            field_file = field.value_from_object(instance)
+            # If the FileField is *not set*, then field_file is not None
+            # (it is still a FieldFile object even if the field is blank), but it is not False in every way
+            # you would expect either.
+            # field_file is None: False
+            # field_file is False: False
+            # field_file is True: False
+            # bool(field_file): False
+            if field_file:
+                # If field_file is True, then a file is currently attached to the FileField
+                data[field.name] = field_file.url
+            continue
+        if isinstance(field, models.ManyToManyField):
+            # Skip ManyToManyFields: need to be handled separately
+            continue
+        if isinstance(field, models.ManyToOneRel):
+            # Skip reverse relations: need to be handled separately
+            continue
+        if isinstance(field, reverse_related.ManyToManyRel):
+            # Skip reverse relations: need to be handled separately
+            continue
+        # If no special handling is needed, just call the fields value_from_object method on the instance
+        data[field.name] = field.value_from_object(instance)
+    return data
 
 
 class DjangoModelBase(pydantic.BaseModel, Generic[DjangoModelT]):
     @classmethod
-    def from_django(
-        cls: type[SelfModelT],
+    def _get_from_django_data(
+        cls: Self,
         obj: DjangoModelT,
-    ) -> SelfModelT:
-        return cls.parse_obj(model_to_dict(obj))
+    ) -> dict:
+        return model_to_dict(obj)
+
+    @overload
+    @classmethod
+    def from_django(cls: Self, obj: None) -> None: ...
+
+    @overload
+    @classmethod
+    def from_django(cls: Self, obj: DjangoModelT) -> Self: ...
+
+    @classmethod
+    def from_django(
+        cls: Self,
+        obj: DjangoModelT | None,
+    ) -> Self | None:
+        if obj is None:
+            return None
+
+        return cls.parse_obj(cls._get_from_django_data(obj))
 
 
 FIELD_TYPE_MAP: dict[
@@ -40,6 +108,7 @@ FIELD_TYPE_MAP: dict[
     models.PositiveSmallIntegerField: (pydantic.PositiveInt, None),
     models.BigIntegerField: (int, None),
     models.PositiveBigIntegerField: (pydantic.PositiveInt, None),
+    models.FloatField: (float, None),
     models.TextField: (str, lambda f: {'max_length': f.max_length}),
     models.BinaryField: (bytes, None),
     models.BooleanField: (bool, None),
@@ -49,17 +118,19 @@ FIELD_TYPE_MAP: dict[
     models.DurationField: (datetime.timedelta, None),
     models.DecimalField: (decimal.Decimal, None),
     models.EmailField: (pydantic.EmailStr, None),
-    # TODO: What fits best here? models.FileField: (pydantic.FilePath, None),
+    models.FileField: (str, None),  # TODO: What fits best here?
     # TODO: What fits best here? models.FilePathField: (pydantic.FilePath, None),
     # TODO: What fits best here? models.ImageField: (pydantic.FilePath, None),
     models.GenericIPAddressField: (pydantic.IPvAnyAddress, None),
-    models.JSONField: (dict[str, Any] | list[Any], None),
+    models.JSONField: (Union[dict[str, Any], list], None),
     models.SlugField: (str, None),
     models.URLField: (pydantic.AnyUrl, None),
     models.UUIDField: (UUID, None),
     models.ForeignKey: (int, None),  # This might be tricky for more complex cases of IDs
     models.OneToOneField: (int, None),  # This might be tricky for more complex cases of IDs
     models.ManyToManyField: None,  # skip
+    models.ManyToOneRel: None,  # skip
+    reverse_related.ManyToManyRel: None,  # skip
 }
 
 
@@ -90,13 +161,20 @@ def django_to_pydantic_model(
                 continue  # skip field
 
         if pydantic_type is None:
-            raise ValueError(f"Cannot determine type of field {field.name} for "
-                             f"model {model_class.__name__}")
+            raise ValueError(
+                f"Cannot determine type of field {field.name} for "
+                f"model {model_class.__name__}",
+            )
 
+        # Ellipsis ... as the pydantic_default marks the field as required
         pydantic_default = ...
+        # django field's attributes `null` and `blank` are used to determine whether it will
+        # be optional in the pydantic model too
         if field.null:
+            # Allow None in pydantic validation
             pydantic_type = pydantic_type | None
-            if field.blank:
+            if hasattr(field, "blank") and field.blank:
+                # None as the pydantic_default marks the field as optional in the OpenAPI spec
                 pydantic_default = None
 
         pydantic_params = {}
@@ -112,7 +190,7 @@ def django_to_pydantic_model(
             ),
         )
 
-    return cast(
+    pydantic_model_class = cast(
         type[DjangoModelBase[DjangoModelT]],
         pydantic.create_model(
             model_class.__name__,
@@ -120,3 +198,7 @@ def django_to_pydantic_model(
             **pydantic_fields,
         ),
     )
+
+    pydantic_model_class.__doc__ = model_class.__doc__
+
+    return pydantic_model_class
