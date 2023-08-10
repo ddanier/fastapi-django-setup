@@ -29,6 +29,10 @@ task:test() {
   run:poetry run pytest
 }
 
+task:lint() {
+  run:poetry run ruff check . "$@"
+}
+
 task:manage.py() {
   run:poetry run python manage.py "$@"
 }
