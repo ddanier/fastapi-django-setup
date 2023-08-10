@@ -1,22 +1,24 @@
 import datetime
 import decimal
 from collections.abc import Callable
-from typing import Any, Generic, Self, TypeVar, Union, cast, overload
+from types import EllipsisType, UnionType
+from typing import Any, Generic, Self, TypeAlias, TypeVar, cast, overload
 from uuid import UUID
 
+import pydantic
+from django.contrib.contenttypes.fields import GenericForeignKey
 from django.db import models
 from django.db.models import FileField
 from django.db.models.fields import reverse_related
-
-import pydantic
+from django.db.models.fields.reverse_related import ForeignObjectRel
 
 DjangoModelT = TypeVar("DjangoModelT", bound=models.Model)
 
 
 def model_to_dict(
     instance: Any,
-    include: list[str] = None,
-    exclude: list[str] = None,
+    include: list[str] | None = None,
+    exclude: list[str] | None = None,
 ) -> dict[str, Any]:
     """
     Return a dict containing the data in ``instance``.
@@ -70,22 +72,22 @@ def model_to_dict(
 class DjangoModelBase(pydantic.BaseModel, Generic[DjangoModelT]):
     @classmethod
     def _get_from_django_data(
-        cls: Self,
+        cls,
         obj: DjangoModelT,
-    ) -> dict:
+    ) -> dict[str, Any]:
         return model_to_dict(obj)
 
     @overload
     @classmethod
-    def from_django(cls: Self, obj: None) -> None: ...
+    def from_django(cls, obj: None) -> None: ...
 
     @overload
     @classmethod
-    def from_django(cls: Self, obj: DjangoModelT) -> Self: ...
+    def from_django(cls: type[Self], obj: DjangoModelT) -> Self: ...
 
     @classmethod
     def from_django(
-        cls: Self,
+        cls: type[Self],
         obj: DjangoModelT | None,
     ) -> Self | None:
         if obj is None:
@@ -94,14 +96,15 @@ class DjangoModelBase(pydantic.BaseModel, Generic[DjangoModelT]):
         return cls.parse_obj(cls._get_from_django_data(obj))
 
 
+FieldType: TypeAlias = models.Field | ForeignObjectRel | GenericForeignKey
 FIELD_TYPE_MAP: dict[
-    type[models.Field],
-    tuple[type, Callable[[models.Field], dict[str, Any]] | None] | None,
+    type[FieldType],  # models.Field is to strict, would not catch ManyToOneRel and others
+    tuple[type | UnionType, Callable[[FieldType], dict[str, Any]] | None] | None,
 ] = {
     models.AutoField: (int, None),
     models.SmallAutoField: (int, None),
     models.BigAutoField: (int, None),
-    models.CharField: (str, lambda f: {'max_length': f.max_length}),
+    models.CharField: (str, lambda f: {'max_length': f.max_length}),  # type: ignore
     models.IntegerField: (int, None),
     models.PositiveIntegerField: (pydantic.PositiveInt, None),
     models.SmallIntegerField: (int, None),
@@ -109,7 +112,7 @@ FIELD_TYPE_MAP: dict[
     models.BigIntegerField: (int, None),
     models.PositiveBigIntegerField: (pydantic.PositiveInt, None),
     models.FloatField: (float, None),
-    models.TextField: (str, lambda f: {'max_length': f.max_length}),
+    models.TextField: (str, lambda f: {'max_length': f.max_length}),  # type: ignore
     models.BinaryField: (bytes, None),
     models.BooleanField: (bool, None),
     models.DateField: (datetime.date, None),
@@ -122,7 +125,7 @@ FIELD_TYPE_MAP: dict[
     # TODO: What fits best here? models.FilePathField: (pydantic.FilePath, None),
     # TODO: What fits best here? models.ImageField: (pydantic.FilePath, None),
     models.GenericIPAddressField: (pydantic.IPvAnyAddress, None),
-    models.JSONField: (Union[dict[str, Any], list], None),
+    models.JSONField: (dict[str, Any] | list[Any], None),
     models.SlugField: (str, None),
     models.URLField: (pydantic.AnyUrl, None),
     models.UUIDField: (UUID, None),
@@ -167,10 +170,10 @@ def django_to_pydantic_model(
             )
 
         # Ellipsis ... as the pydantic_default marks the field as required
-        pydantic_default = ...
+        pydantic_default: EllipsisType | None = ...
         # django field's attributes `null` and `blank` are used to determine whether it will
         # be optional in the pydantic model too
-        if field.null:
+        if hasattr(field, "null") and field.null:
             # Allow None in pydantic validation
             pydantic_type = pydantic_type | None
             if hasattr(field, "blank") and field.blank:
@@ -184,17 +187,17 @@ def django_to_pydantic_model(
             pydantic_type,
             pydantic.Field(
                 pydantic_default,
-                title=str(field.verbose_name),
-                description=str(field.help_text),
+                title=str(getattr(field, "verbose_name", field.name)),
+                description=str(getattr(field, "help_text", "")),
                 **pydantic_params,
             ),
         )
 
     pydantic_model_class = cast(
         type[DjangoModelBase[DjangoModelT]],
-        pydantic.create_model(
+        pydantic.create_model(  # type: ignore
             model_class.__name__,
-            __base__=DjangoModelBase,
+            __base__=DjangoModelBase[model_class],  # type: ignore
             **pydantic_fields,
         ),
     )

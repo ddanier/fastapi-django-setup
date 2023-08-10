@@ -29,8 +29,17 @@ task:test() {
   run:poetry run pytest
 }
 
+task:ruff() {
+  run:poetry run ruff check fastapi_django_test "$@"
+}
+
+task:mypy() {
+  run:poetry run mypy fastapi_django_test "$@"
+}
+
 task:lint() {
-  run:poetry run ruff check . "$@"
+  task:ruff
+  task:mypy
 }
 
 task:manage.py() {
