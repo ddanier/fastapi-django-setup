@@ -9,7 +9,6 @@ python = "^3.11"
 fastapi = "^0.101.0"
 uvicorn = "^0.23.2"
 django = "^4.2.4"
-a2wsgi = "^1.7.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"

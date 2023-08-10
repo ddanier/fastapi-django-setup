@@ -1,12 +1,11 @@
 from typing import Any
 
-from a2wsgi import WSGIMiddleware
 from django.conf import settings
-from django.contrib.staticfiles.handlers import StaticFilesHandler
+from django.contrib.staticfiles.handlers import ASGIStaticFilesHandler
 from fastapi import FastAPI
 
 # isort: off
-from .wsgi import application as django_app
+from .asgi import application as django_app
 from .api.v1 import router as v1_router
 from .utils.api.route_names import use_route_names_as_operation_ids
 
@@ -35,6 +34,6 @@ use_route_names_as_operation_ids(app)
 
 
 if settings.DEBUG:
-    app.mount("/", WSGIMiddleware(StaticFilesHandler(django_app)))  # type: ignore
+    app.mount("/", ASGIStaticFilesHandler(django_app))  # type: ignore
 else:
-    app.mount("/", WSGIMiddleware(django_app))  # type: ignore
+    app.mount("/", django_app)  # type: ignore
