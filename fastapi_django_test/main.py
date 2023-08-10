@@ -3,7 +3,7 @@ from typing import Any
 from django.conf import settings
 from django.contrib.staticfiles.handlers import StaticFilesHandler
 from fastapi import FastAPI
-from fastapi.middleware.wsgi import WSGIMiddleware
+from a2wsgi import WSGIMiddleware
 
 # isort: off
 from .wsgi import application as django_app
