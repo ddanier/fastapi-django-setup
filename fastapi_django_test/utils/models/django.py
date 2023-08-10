@@ -1,8 +1,11 @@
 import datetime
 import decimal
+from collections.abc import Callable
 from typing import (
-    Any, Callable, Dict, Generic, List, Optional, Tuple, Type,
-    TypeVar, Union, cast,
+    Any,
+    Generic,
+    TypeVar,
+    cast,
 )
 from uuid import UUID
 
@@ -17,15 +20,15 @@ DjangoModelT = TypeVar("DjangoModelT", bound=models.Model)
 class DjangoModelBase(pydantic.BaseModel, Generic[DjangoModelT]):
     @classmethod
     def from_django(
-        cls: Type[SelfModelT],
+        cls: type[SelfModelT],
         obj: DjangoModelT,
     ) -> SelfModelT:
         return cls.parse_obj(model_to_dict(obj))
 
 
-FIELD_TYPE_MAP: Dict[
-    Type[models.Field],
-    Optional[Tuple[Type, Optional[Callable[[models.Field], Dict[str, Any]]]]],
+FIELD_TYPE_MAP: dict[
+    type[models.Field],
+    tuple[type, Callable[[models.Field], dict[str, Any]] | None] | None,
 ] = {
     models.AutoField: (int, None),
     models.SmallAutoField: (int, None),
@@ -50,7 +53,7 @@ FIELD_TYPE_MAP: Dict[
     # TODO: What fits best here? models.FilePathField: (pydantic.FilePath, None),
     # TODO: What fits best here? models.ImageField: (pydantic.FilePath, None),
     models.GenericIPAddressField: (pydantic.IPvAnyAddress, None),
-    models.JSONField: (Union[Dict[str, Any], List], None),
+    models.JSONField: (dict[str, Any] | list[Any], None),
     models.SlugField: (str, None),
     models.URLField: (pydantic.AnyUrl, None),
     models.UUIDField: (UUID, None),
@@ -61,8 +64,8 @@ FIELD_TYPE_MAP: Dict[
 
 
 def django_to_pydantic_model(
-    model_class: Type[DjangoModelT],
-) -> Type[DjangoModelBase[DjangoModelT]]:
+    model_class: type[DjangoModelT],
+) -> type[DjangoModelBase[DjangoModelT]]:
     pydantic_fields = {}
 
     for field in model_class._meta.get_fields(include_hidden=False):
@@ -92,7 +95,7 @@ def django_to_pydantic_model(
 
         pydantic_default = ...
         if field.null:
-            pydantic_type = Optional[pydantic_type]
+            pydantic_type = pydantic_type | None
             if field.blank:
                 pydantic_default = None
 
@@ -110,7 +113,7 @@ def django_to_pydantic_model(
         )
 
     return cast(
-        Type[DjangoModelBase[DjangoModelT]],
+        type[DjangoModelBase[DjangoModelT]],
         pydantic.create_model(
             model_class.__name__,
             __base__=DjangoModelBase,

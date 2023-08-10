@@ -6,17 +6,16 @@ from ....main import app
 from ....something.models import Something
 
 
-@pytest.fixture
-@pytest.mark.django_db
-@pytest.mark.usefixtures('django_db_setup', 'transactional_db')
-def create_somethings():
+@pytest.fixture()
+@pytest.mark.django_db()
+def create_somethings():  # noqa: PT004
     Something.objects.create(
         name='Something 1',
     )
 
 
-@pytest.mark.anyio
-@pytest.mark.django_db
+@pytest.mark.anyio()
+@pytest.mark.django_db()
 @pytest.mark.usefixtures('create_somethings', 'transactional_db')
 async def test_hello_world():
     async with AsyncClient(app=app, base_url="http://test") as ac:

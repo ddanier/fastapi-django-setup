@@ -9,5 +9,5 @@ class AnimalTestCase(TestCase):
         Something.objects.create(name="B")
 
     def test_animals_can_speak(self):
-        obj_a = Something.objects.get(name="A")
-        obj_b = Something.objects.get(name="B")
+        Something.objects.get(name="A")
+        Something.objects.get(name="B")

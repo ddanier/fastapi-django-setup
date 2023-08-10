@@ -1,3 +1,5 @@
+from typing import Any
+
 from django.conf import settings
 from django.contrib.staticfiles.handlers import StaticFilesHandler
 from fastapi import FastAPI
@@ -24,7 +26,7 @@ app = FastAPI(
 
 
 @app.get("/hello-world", include_in_schema=False)
-def read_main():
+def read_main() -> dict[str, Any]:
     return {"message": "Hello World"}
 
 
