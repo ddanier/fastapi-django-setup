@@ -1,6 +1,0 @@
-# This is the central configuration for all tools we use/execute. It is parsed inside
-# the Taskfile, too. See $CONFIG_project_name for example.
-version: "1.3.2"
-project:
-  name: django-poetry-test
-  key: django-poetry-test
