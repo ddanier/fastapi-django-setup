@@ -20,4 +20,3 @@ def to_upper_camel(string: str) -> str:
         for word
         in string.split("_")
     )
-
