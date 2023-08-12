@@ -30,7 +30,7 @@ run *args="--host 0.0.0.0 --port 8000 --reload": (poetry "run" "uvicorn" "fastap
 
 test *args: (poetry "run" "pytest" "--cov=fastapi_django" "--cov=fastapi_django_test" "--cov-report" "term-missing:skip-covered" args)
 
-ruff *args: (poetry "run" "ruff" "check" "fastapi_django" "fastapi_django_test" args)
+ruff *args: (poetry "run" "ruff" "check" "fastapi_django" "fastapi_django_test" "tests" args)
 
 mypy *args:  (poetry "run" "mypy" "fastapi_django" "fastapi_django_test" args)
 

@@ -16,9 +16,9 @@ DjangoModelT = TypeVar("DjangoModelT", bound=models.Model)
 
 
 def model_to_dict(
-    instance: Any,
-    include: list[str] | None = None,
-    exclude: list[str] | None = None,
+    instance: models.Model,
+    include: set[str] | None = None,
+    exclude: set[str] | None = None,
 ) -> dict[str, Any]:
     """
     Return a dict containing the data in ``instance``.
@@ -65,7 +65,8 @@ def model_to_dict(
             # Skip reverse relations: need to be handled separately
             continue
         # If no special handling is needed, just call the fields value_from_object method on the instance
-        data[field.name] = field.value_from_object(instance)
+        if isinstance(field, models.Field):
+            data[field.name] = field.value_from_object(instance)
     return data
 
 
