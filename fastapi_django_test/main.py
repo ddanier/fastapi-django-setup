@@ -6,31 +6,32 @@ from fastapi import FastAPI
 
 # isort: off
 from .asgi import application as django_app
-from .api.v1 import router as v1_router
-from .utils.api.route_names import use_route_names_as_operation_ids
+from .api.v1 import api_v1
+from .api.v2 import api_v2
 
 app = FastAPI(
-    openapi_url="/api/v1/openapi.json",
-    docs_url="/api/v1/docs",
-    redoc_url="/api/v1/redoc",
-    swagger_ui_parameters={
-        "persistAuthorization": settings.DEBUG,
-        "filter": True,
-        "displayOperationId": True,
-        "docExpansion": "none",
-        "defaultModelsExpandDepth": 0,
-        "displayRequestDuration": settings.DEBUG,
-    },
+    # Disable any docs, as the root FastAPI instance does is only necessary to mount
+    # all the other things like the API, Django, etc.
+    openapi_url=None,
+    docs_url=None,
+    redoc_url=None,
 )
 
 
-@app.get("/hello-world", include_in_schema=False)
-def read_main() -> dict[str, Any]:
+# You may include some generic methods here...
+@app.get("/hello-world")
+def hello_world() -> dict[str, Any]:
     return {"message": "Hello World"}
 
 
-app.include_router(v1_router, prefix="/api/v1")
-use_route_names_as_operation_ids(app)
+# ...like a health check
+@app.get("/health")
+def health() -> dict[str, Any]:
+    return {"all": "ok"}
+
+
+app.mount("/api/v1", api_v1)
+app.mount("/api/v2", api_v2)
 
 
 if settings.DEBUG:
