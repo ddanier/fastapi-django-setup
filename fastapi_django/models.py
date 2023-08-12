@@ -58,12 +58,6 @@ def model_to_dict(
         if isinstance(field, models.ManyToManyField):
             # Skip ManyToManyFields: need to be handled separately
             continue
-        if isinstance(field, models.ManyToOneRel):
-            # Skip reverse relations: need to be handled separately
-            continue
-        if isinstance(field, reverse_related.ManyToManyRel):
-            # Skip reverse relations: need to be handled separately
-            continue
         if isinstance(field, models.ForeignObjectRel):
             # Skip reverse relations: need to be handled separately
             continue
