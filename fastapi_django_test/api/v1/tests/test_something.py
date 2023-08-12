@@ -8,8 +8,8 @@ from ....something.models import Something
 
 @pytest.fixture()
 @pytest.mark.django_db()
-def create_somethings():  # noqa: PT004
-    Something.objects.create(
+async def create_somethings():  # noqa: PT004
+    await Something.objects.acreate(
         name='Something 1',
     )
 
