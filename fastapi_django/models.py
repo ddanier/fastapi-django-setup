@@ -64,9 +64,14 @@ def model_to_dict(
         if isinstance(field, reverse_related.ManyToManyRel):
             # Skip reverse relations: need to be handled separately
             continue
+        if isinstance(field, models.ForeignObjectRel):
+            # Skip reverse relations: need to be handled separately
+            continue
+        if isinstance(field, GenericForeignKey):
+            # Skip generic foreign keys: need to be handled separately
+            continue
         # If no special handling is needed, just call the fields value_from_object method on the instance
-        if isinstance(field, models.Field):
-            data[field.name] = field.value_from_object(instance)
+        data[field.name] = field.value_from_object(instance)
     return data
 
 
