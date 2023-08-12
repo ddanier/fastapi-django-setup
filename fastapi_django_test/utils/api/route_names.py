@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 
-from ..namings import to_lower_camel
+from ..namings import to_camel_case
 
 
 def use_route_names_as_operation_ids(application: FastAPI) -> None:
@@ -13,4 +13,4 @@ def use_route_names_as_operation_ids(application: FastAPI) -> None:
 
     for route in application.routes:
         if isinstance(route, APIRoute):
-            route.operation_id = to_lower_camel(route.name)
+            route.operation_id = to_camel_case(route.name)
