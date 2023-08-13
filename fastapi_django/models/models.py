@@ -2,9 +2,10 @@ from types import EllipsisType
 from typing import Any, Generic, Self, cast, overload
 
 import pydantic
+from pydantic_core._pydantic_core import PydanticUndefined, PydanticUndefinedType
 
 from .dict import model_to_dict
-from .fields import FIELD_TYPE_MAP
+from .fields import _get_pydantic_field_options_from_django_field
 from .types import DjangoModelT
 
 
@@ -37,54 +38,66 @@ class DjangoModelBase(pydantic.BaseModel, Generic[DjangoModelT]):
 
 def django_to_pydantic_model(
     model_class: type[DjangoModelT],
+    *,
+    skip_unknown_field_types: bool = False,
 ) -> type[DjangoModelBase[DjangoModelT]]:
     pydantic_fields = {}
 
     for field in model_class._meta.get_fields(include_hidden=False):
-        pydantic_type = None
-        pydantic_params_callback = None
-        if field.__class__ in FIELD_TYPE_MAP:
-            pydantic_config = FIELD_TYPE_MAP[field.__class__]
-            if pydantic_config is None:
-                continue  # skip field
-            pydantic_type, pydantic_params_callback = pydantic_config
+        pydantic_field_options = _get_pydantic_field_options_from_django_field(field)
 
-        if pydantic_type is None:
-            skip_field = False
-            for django_field_type, pydantic_config in FIELD_TYPE_MAP.items():
-                if isinstance(field, django_field_type):
-                    if pydantic_config is None:
-                        skip_field = True
-                        continue  # skip loop
-                    pydantic_type, pydantic_params_callback = pydantic_config
-                    break
-            if skip_field:
-                continue  # skip field
-
-        if pydantic_type is None:
+        # If we found no type, abort
+        if pydantic_field_options is None:
+            if skip_unknown_field_types:
+                continue
             raise ValueError(
                 f"Cannot determine type of field {field.name} for "
                 f"model {model_class.__name__}",
             )
 
-        # Ellipsis ... as the pydantic_default marks the field as required
-        pydantic_default: EllipsisType | None = ...
-        # django field's attributes `null` and `blank` are used to determine whether it will
-        # be optional in the pydantic model too
+        # Prepare all variables we are using
+        pydantic_type, pydantic_params_callback = pydantic_field_options
+        pydantic_default: EllipsisType | PydanticUndefinedType | None = ...
+        pydantic_params = {}
+        pydantic_name = field.attname if hasattr(field, "attname") else field.name
+
+        # Allow pydantic_type to be a callable so we determine the actual type
+        # lazily (used for ForeignKeys)
+        if (
+            not isinstance(pydantic_type, type)
+            and callable(pydantic_type)
+        ):
+            pydantic_type = pydantic_type(field)
+
+        # Calculate pydantic default value determine if it should allow None values
+        # django field's attributes `null` and `blank` are used to determine whether it
+        # will be optional in the pydantic model
         if hasattr(field, "null") and field.null:
             # Allow None in pydantic validation
             pydantic_type = pydantic_type | None
             if hasattr(field, "blank") and field.blank:
-                # None as the pydantic_default marks the field as optional in the OpenAPI spec
+                # None as the pydantic_default marks the field as optional in the
+                # OpenAPI spec
                 pydantic_default = None
 
-        pydantic_params = {}
+        # Calculate fields default value
+        if hasattr(field, "default") and field.default:
+            if callable(field.default):
+                pydantic_params["default_factory"] = field.default
+                pydantic_default = PydanticUndefined  # Ensure we don't have two defaults
+            else:
+                pydantic_default = field.default
+
+        # Prepare all other field options
         if pydantic_params_callback is not None:
-            pydantic_params = pydantic_params_callback(field)
-        pydantic_fields[field.name] = (
+            pydantic_params.update(pydantic_params_callback(field))
+
+        # Create the actual field
+        pydantic_fields[pydantic_name] = (
             pydantic_type,
             pydantic.Field(
                 pydantic_default,
+                alias=field.name if field.name != pydantic_name else None,
                 title=str(getattr(field, "verbose_name", field.name)),
                 description=str(getattr(field, "help_text", "")),
                 **pydantic_params,
