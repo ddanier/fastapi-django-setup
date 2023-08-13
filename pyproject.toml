@@ -20,6 +20,7 @@ dirty-equals = "^0.6.0"
 ruff = "^0.0.284"
 mypy = "^1.5.0"
 django-stubs = "^4.2.3"
+email-validator = "^2.0.0.post2"
 
 [tool.ruff]
 select = ["F","E","W","C","I","N","UP","ANN","S","B","A","COM","C4","T20","PT","ARG","TD","RUF"]
