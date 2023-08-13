@@ -41,6 +41,9 @@ plugins = ["mypy_django_plugin.main"]
 [tool.django-stubs]
 django_settings_module = "fastapi_django_test.settings"
 
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "fastapi_django_test.settings"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"

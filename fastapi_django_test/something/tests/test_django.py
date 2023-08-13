@@ -22,7 +22,7 @@ class SomethingDBTestCase(TestCase):
 
 # SAME AS ABOVE, but using async
 
-pytestmark = pytest.mark.django_db()
+pytestmark = pytest.mark.django_db(transaction=True)
 
 
 def test_str():
@@ -39,5 +39,12 @@ async def setup_db():
 @pytest.mark.anyio()
 @pytest.mark.usefixtures("setup_db")
 async def test_get_somethings():
+    await Something.objects.aget(name="A")
+    await Something.objects.aget(name="B")
+
+
+@pytest.mark.anyio()
+@pytest.mark.usefixtures("setup_db")
+async def test_get_somethings_2():
     await Something.objects.aget(name="A")
     await Something.objects.aget(name="B")

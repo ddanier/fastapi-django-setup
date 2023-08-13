@@ -7,7 +7,7 @@ from fastapi_django_test.something.models import Something
 # Mark all tests to use the Django DB:
 # Note: You could also use `pytest.mark.django_db()` as a decorator, but here all tests
 # need the DB, so this is way easier.
-pytestmark = pytest.mark.django_db()
+pytestmark = pytest.mark.django_db(transaction=True)
 
 
 @pytest.fixture()
