@@ -39,7 +39,7 @@ class DjangoModelBase(pydantic.BaseModel, Generic[DjangoModelT]):
 def django_to_pydantic_model(
     model_class: type[DjangoModelT],
     *,
-    skip_unknown_field_types: bool = False,
+    skip_unknown_field_types: bool = True,
 ) -> type[DjangoModelBase[DjangoModelT]]:
     pydantic_fields = {}
 

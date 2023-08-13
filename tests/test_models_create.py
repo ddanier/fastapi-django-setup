@@ -20,6 +20,7 @@ class Something(models.Model):
     email = models.EmailField(null=True, blank=True)
 
     other = models.ForeignKey("Other", on_delete=models.CASCADE, null=True, blank=True)
+    more_others = models.ManyToManyField("Other", blank=True)
 
     avatar = models.ImageField()
 

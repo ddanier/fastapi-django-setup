@@ -12,10 +12,10 @@ from django.db.models.fields import reverse_related
 from django.db.models.fields.reverse_related import ForeignObjectRel
 
 # Follow pydantic schema for email validation
-try:
+try:  # pragma: no cover
     import email_validator  # noqa: F401
     HAS_EMAIL_VALIDATOR = True
-except ImportError:
+except ImportError:  # pragma: no cover
     HAS_EMAIL_VALIDATOR = False
 
 FieldType: TypeAlias = models.Field | ForeignObjectRel | GenericForeignKey
