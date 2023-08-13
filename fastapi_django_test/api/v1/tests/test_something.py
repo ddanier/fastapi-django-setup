@@ -4,6 +4,11 @@ from httpx import AsyncClient
 
 from fastapi_django_test.something.models import Something
 
+# Mark all tests to use the Django DB:
+# Note: You could also use `pytest.mark.django_db()` as a decorator, but here all tests
+# need the DB, so this is way easier.
+pytestmark = pytest.mark.django_db()
+
 
 @pytest.fixture()
 def app():
@@ -16,15 +21,13 @@ def app():
 
 
 @pytest.fixture()
-@pytest.mark.django_db()
-async def create_somethings():  # noqa: PT004
+async def create_somethings():
     await Something.objects.acreate(
         name='Something 1',
     )
 
 
 @pytest.mark.anyio()
-@pytest.mark.django_db()
 @pytest.mark.usefixtures('create_somethings', 'transactional_db')
 async def test_hello_world(app):
     async with AsyncClient(app=app, base_url="http://test") as ac:
