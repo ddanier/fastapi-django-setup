@@ -27,7 +27,7 @@ class Something(models.Model):
     avatar = models.ImageField(storage=storage)
 
     class Meta:
-        app_label = 'test'
+        app_label = 'test_models_dict'
 
 
 class Other(models.Model):
@@ -36,7 +36,7 @@ class Other(models.Model):
     something = models.ManyToManyField(Something, related_name="reverse_others")
 
     class Meta:
-        app_label = 'test'
+        app_label = 'test_models_dict'
 
 
 def test_model_to_dict_for_simple_fields():

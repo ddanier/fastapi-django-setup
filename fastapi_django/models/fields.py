@@ -11,6 +11,13 @@ from django.db import models
 from django.db.models.fields import reverse_related
 from django.db.models.fields.reverse_related import ForeignObjectRel
 
+# Follow pydantic schema for email validation
+try:
+    import email_validator  # noqa: F401
+    HAS_EMAIL_VALIDATOR = True
+except ImportError:
+    HAS_EMAIL_VALIDATOR = False
+
 FieldType: TypeAlias = models.Field | ForeignObjectRel | GenericForeignKey
 JSONValue: TypeAlias = bool | float | int | str | None
 JSONType: TypeAlias = dict[str, JSONValue] | list[JSONValue] | JSONValue
@@ -33,7 +40,7 @@ FIELD_TYPE_MAP: dict[
     models.DateTimeField: (datetime.datetime, None),
     models.DecimalField: (decimal.Decimal, None),
     models.DurationField: (datetime.timedelta, None),
-    models.EmailField: (pydantic.EmailStr, None),
+    models.EmailField: (pydantic.EmailStr if HAS_EMAIL_VALIDATOR else str, None),
     models.FileField: (str, None),  # TODO: What fits best here?
     # TODO: What fits best here? models.FilePathField: (pydantic.FilePath, None),
     models.FloatField: (float, None),
@@ -119,7 +126,12 @@ def _get_pydantic_field_type_from_django_field(
     if pydantic_field_options is None:
         raise ValueError(f"Cannot determine type for field {field.__class__}")
 
-    if callable(pydantic_field_options[0]):
-        return pydantic_field_options[0](field)
+    pydantic_type = pydantic_field_options[0]
 
-    return pydantic_field_options[0]
+    if (
+        not isinstance(pydantic_type, type)
+        and callable(pydantic_type)
+    ):
+        return pydantic_type(field)
+
+    return pydantic_type
