@@ -1,0 +1,28 @@
+FROM python:3.11-slim
+
+# Setup pipx to be accessible by all users
+ENV PIPX_HOME=/app/.local/pipx \
+    PIPX_BIN_DIR=/app/.local/bin \
+    PATH=/app/.local/bin:$PATH
+
+# Install pipx and poetry
+RUN python3 -m pip install pipx && \
+    pipx install poetry
+
+# Setup poetry base ENV
+ENV POETRY_ROOT="/pypoetry"
+ENV \
+  POETRY_CONFIG_DIR="${POETRY_ROOT}/config" \
+  POETRY_CACHE_DIR="${POETRY_ROOT}/cache"
+
+# Setup poetry to use correct paths (including /app/src/.venv as path for app)
+RUN mkdir "$POETRY_ROOT" "$POETRY_CONFIG_DIR" "$POETRY_CACHE_DIR" && \
+    poetry config virtualenvs.in-project true && \
+    chmod -R 0777 "$POETRY_ROOT"
+
+# Setup ENV
+ENV VENV_PATH="/app/src/.venv"
+ENV PATH="$VENV_PATH/bin:${PATH}"
+
+# Set Workdir
+WORKDIR /app/src

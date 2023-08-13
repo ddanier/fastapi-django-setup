@@ -37,3 +37,28 @@ mypy *args:  (poetry "run" "mypy" "fastapi_django" "fastapi_django_test" args)
 lint: ruff mypy
 
 manage-py *args: (poetry "run" "python" "manage.py" args)
+
+# DOCKER VERSIONS OF EVERYTHING
+
+docker-install: docker-update
+
+docker-update: (docker-compose "pull") (docker-compose "build" "--pull")  (docker-poetry "install") (docker-manage-py "migrate")
+
+docker-compose *args:
+    docker compose {{args}}
+
+docker-poetry *args: (docker-compose "run" "api" "poetry" args)
+
+docker-run *args="-d": (docker-compose "up" args)
+
+docker-halt *args="": (docker-compose "down" args)
+
+docker-test *args: (docker-compose "exec" "api" "pytest" "--cov=fastapi_django" "--cov=fastapi_django_test" "--cov-report" "term-missing:skip-covered" args)
+
+docker-ruff *args: (docker-compose "exec" "api" "ruff" "check" "fastapi_django" "fastapi_django_test" "tests" args)
+
+docker-mypy *args:  (docker-compose "exec" "api" "mypy" "fastapi_django" "fastapi_django_test" args)
+
+docker-lint: docker-ruff docker-mypy
+
+docker-manage-py *args: (poetry "run" "python" "manage.py" args)

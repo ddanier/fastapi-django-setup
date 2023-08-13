@@ -1,0 +1,25 @@
+services:
+  postgresql:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: docker
+      POSTGRES_PASSWORD: docker
+      POSTGRES_DB: docker
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    environment:
+      POSTGRES_USER: docker
+      POSTGRES_PASSWORD: docker
+      POSTGRES_DB: docker
+    volumes:
+      - .:/app/src
+      - docker_venv:/app/src/.venv
+    command: ["uvicorn", "fastapi_django_test.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    ports:
+      - 8000:8000
+
+volumes:
+  docker_venv:
