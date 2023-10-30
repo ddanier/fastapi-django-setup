@@ -20,7 +20,7 @@ class Something(models.Model):
     email = models.EmailField(null=True, blank=True)
 
     other = models.ForeignKey("Other", on_delete=models.CASCADE, null=True, blank=True)
-    more_others = models.ManyToManyField("Other", blank=True)
+    # more_others = models.ManyToManyField("Other", blank=True)
 
     avatar = models.ImageField()
 
@@ -65,3 +65,25 @@ def test_model_create():
         assert SomethingInPydantic.model_fields["email"].annotation == str | None
     assert SomethingInPydantic.model_fields["other_id"].annotation == uuid.UUID | None
     assert SomethingInPydantic.model_fields["avatar"].annotation == str
+
+
+def test_model_create_include():
+    assert (
+        set(django_to_pydantic_model(Something, include={"id"}).__fields__.keys())
+        == {"id"}
+    )
+    assert (
+        set(django_to_pydantic_model(Something, include={"id", "name"}).__fields__.keys())
+        == {"id", "name"}
+    )
+
+
+def test_model_create_exclude():
+    assert not (
+        set(django_to_pydantic_model(Something, exclude={"id"}).__fields__.keys())
+        & {"id"}
+    )
+    assert not (
+        set(django_to_pydantic_model(Something, exclude={"id", "name"}).__fields__.keys())
+        & {"id", "name"}
+    )
